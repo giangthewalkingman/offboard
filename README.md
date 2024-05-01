@@ -7,7 +7,7 @@
     git clone https://github.com/giangthewalkingman/offboard.git  
 
 ## Usage
-**3. open CMakeLists.txt to uncomment the code block in "for build on your laptop" (if you are using your laptop) and comment the code block in "for build on rpi server" (if you are using your laptop), if you are using the rpi server, do the opposite**  
+**3. open CMakeLists.txt to uncomment the code block in "for build on your laptop" and comment the code block in "for build on rpi server" (if you are using your laptop), if you are using the rpi server, do the opposite**  
     sudo nano offboard/CMakeLists.txt  
 **4. back to the workspace and build the code**  
     cd ..  
