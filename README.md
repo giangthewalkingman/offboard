@@ -1,18 +1,18 @@
 # offboard
 ## Installation
 (in your current working directory)  
-1. create a catkin workspace  
+**1. create a catkin workspace**  
     mkdir -p catkin_ws/src  
-2. cd catkin_ws/src  
+**2. cd catkin_ws/src**  
     git clone https://github.com/giangthewalkingman/offboard.git  
 
 ## Usage
-3. open CMakeLists.txt to uncomment the code block in "for build on your laptop" (if you are using your laptop) and comment the code block in "for build on rpi server" (if you are using the rpi)  
+**3. open CMakeLists.txt to uncomment the code block in "for build on your laptop" (if you are using your laptop) and comment the code block in "for build on rpi server" (if you are using the rpi)**  
     sudo nano offboard/CMakeLists.txt  
-4. back to the workspace and build the code  
+**4. back to the workspace and build the code**  
     cd ..  
     catkin_make  
-5. run the code  
+**5. run the code**  
     source ./devel/setup.bash  
     roslaunch offboard offboard.launch  (in terminal 1)  
     roslaunch setmode setmodeoffb       (in terminal 2)  
