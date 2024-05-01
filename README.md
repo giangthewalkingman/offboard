@@ -12,13 +12,15 @@
 4. back to the workspace and build the code
     cd ..
     catkin_make
-5. run the code
-    source ./devel/setup.bash
-    roslaunch offboard offboard.launch  (in terminal 1)
-    roslaunch setmode setmodeoffb       (in terminal 2)
+5. run the code  
+    source ./devel/setup.bash  
+    roslaunch offboard offboard.launch  (in terminal 1)  
+    roslaunch setmode setmodeoffb       (in terminal 2)  
 
 ## Warnings
-At this time, the code cannot run on your laptop as simulation because the files are specificially targeted to run on 
+* At this time, the code cannot run on your laptop as simulation because the files are specificially targeted to run on the raspberry pi.
+* On the raspberry pi, the code works well
+
 ## Versions
-raspberry pi: 3b+, 1gb ram, ubuntu server 20.04
-ros: noetic
+* raspberry pi: 3b+, 1gb ram, ubuntu server 20.04
+* ros: noetic
