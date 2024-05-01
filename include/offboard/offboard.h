@@ -57,7 +57,7 @@ class OffboardControl
 
     // right front - left front - right back - left back
     uint8_t pwmValue[4];
-    uint8_t PWM_INCREMENT = 0;
+    uint8_t PWM_INCREMENT = 5;
     ros::Time operation_time_1, operation_time_2;
 
     void armModeCallback(const std_msgs::Bool::ConstPtr &msg);
@@ -69,7 +69,8 @@ class OffboardControl
     void waitForArming(double hz);
     void initNcurses();
     void cleanupNcurses();
-    void printPWM(uint8_t pwmValues[], std::string direction);
+    void printPWM(uint8_t pwmValues[], uint8_t direction);
+    void printPWM(uint8_t pwmValues[]);
     void sendI2CMsg(uint8_t right_front_pwm, uint8_t left_front_pwm, uint8_t right_back_pwm, uint8_t left_back_pwm, uint8_t direction);
 };
 
