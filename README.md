@@ -18,7 +18,7 @@
     roslaunch setmode setmodeoffb       (in terminal 2)  
 
 ## Warnings
-* At this time, the code cannot run on your laptop as simulation because the files are specificially targeted to run on the raspberry pi.
+* At this time, the code cannot run on your laptop as simulation because the files are specificially targetted to run on the raspberry pi.
 * On the raspberry pi, the code works well
 
 ## Versions
