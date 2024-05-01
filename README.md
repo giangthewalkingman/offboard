@@ -3,7 +3,8 @@
 (in your current working directory)  
 **1. create a catkin workspace**  
     mkdir -p catkin_ws/src  
-**2. cd catkin_ws/src**  
+**2. cd to src**  
+    cd catkin_ws/src  
     git clone https://github.com/giangthewalkingman/offboard.git  
 
 ## Usage
