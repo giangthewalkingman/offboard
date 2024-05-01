@@ -19,3 +19,6 @@
 
 ## Warnings
 At this time, the code cannot run on your laptop as simulation because the files are specificially targeted to run on 
+## Versions
+raspberry pi: 3b+, 1gb ram, ubuntu server 20.04
+ros: noetic
