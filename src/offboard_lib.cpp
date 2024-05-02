@@ -51,6 +51,8 @@ void OffboardControl::waitForArming(double hz) {
         rate.sleep();
         ros::spinOnce();
     }
+    pwmValue[0] = 127;
+    pwmValue[1] = 127;
 }
 
 void OffboardControl::teleopControl() {
@@ -60,63 +62,30 @@ void OffboardControl::teleopControl() {
     while ((ch = getch()) != 'q') { // Loop until 'q' is pressed
         switch(ch) {
             case KEY_UP:
-                sendI2CMsg(pwmValue[0], pwmValue[1], pwmValue[2], pwmValue[3], FORWARD);
-                printPWM(pwmValue, FORWARD); 
-                // Adjust PWM values and direction for forward motion
+                pwmValue[0]++;
                 break;
             case KEY_DOWN:
-                sendI2CMsg(pwmValue[0], pwmValue[1], pwmValue[2], pwmValue[3], BACKWARD);
-                printPWM(pwmValue, BACKWARD); 
-                // Adjust PWM values and direction for backward motion
+                pwmValue[0]--;
                 break;
             case KEY_LEFT:
-                sendI2CMsg(pwmValue[0], pwmValue[1], pwmValue[2], pwmValue[3], TURNLEFT);
-                printPWM(pwmValue, TURNLEFT); 
-                // Adjust PWM values and direction for left turn
+                pwmValue[1]--;
                 break;
             case KEY_RIGHT:
-                sendI2CMsg(pwmValue[0], pwmValue[1], pwmValue[2], pwmValue[3], TURNRIGHT);
-                printPWM(pwmValue, TURNRIGHT); 
-                // Adjust PWM values and direction for right turn
-                break;
-            case 'w':
-                // Increase PWM values
-                pwmValue[0] += PWM_INCREMENT;
-                pwmValue[1] += PWM_INCREMENT;
-                pwmValue[2] += PWM_INCREMENT;
-                pwmValue[3] += PWM_INCREMENT;
-                for(int i = 0; i < 4; i ++) {
-                    if(pwmValue[i] < 0) {
-                        pwmValue[i] = 0;
-                    } else if(pwmValue[i] > 255) {
-                        pwmValue[i] = 255;
-                    }
-                }
-                printPWM(pwmValue); 
-                // std::cout << "Increased PWM\n";
-                // printPWM(pwmValue); // Print PWM values
-                break;
-            case 's':
-                // Decrease PWM values
-                pwmValue[0] -= PWM_INCREMENT;
-                pwmValue[1] -= PWM_INCREMENT;
-                pwmValue[2] -= PWM_INCREMENT;
-                pwmValue[3] -= PWM_INCREMENT;
-                for(int i = 0; i < 4; i ++) {
-                    if(pwmValue[i] < 0) {
-                        pwmValue[i] = 0;
-                    } else if(pwmValue[i] > 255) {
-                        pwmValue[i] = 255;
-                    }
-                }
-                printPWM(pwmValue); 
-                // std::cout << "Decreased PWM\n";
-                // printPWM(pwmValue); // Print PWM values
+                pwmValue[1]++;
                 break;
             default:
                 std::cout << "Invalid input\n";
                 break;
         }
+        for(int i = 0; i < 2; i++) {
+            if(pwmValue[i] < 0) {
+                pwmValue[i] = 0;
+            } else if (pwmValue[i] > 255) {
+                pwmValue[i] = 255;
+            }
+        }
+        sendI2CMsg(pwmValue[0], pwmValue[1]);
+        printPWM(pwmValue); 
     }
 
     cleanupNcurses(); // Cleanup ncurses
@@ -141,54 +110,22 @@ void OffboardControl::cleanupNcurses() {
 }
 
 void OffboardControl::landing() {
-    sendI2CMsg(0, 0, 0, 0, STOP);
+    sendI2CMsg(0, 0);
     operation_time_2 = ros::Time::now();
     std::printf("\n[ INFO] Operation time %.1f (s)\n\n", (operation_time_2 - operation_time_1).toSec());
     ros::shutdown();
 }
 
-void OffboardControl::sendI2CMsg(uint8_t right_front_pwm, uint8_t left_front_pwm, uint8_t right_back_pwm, uint8_t left_back_pwm, uint8_t direction) {
-    wiringPiI2CWrite(fd, right_front_pwm);
-    wiringPiI2CWrite(fd, left_front_pwm);
-    wiringPiI2CWrite(fd, right_back_pwm);
-    wiringPiI2CWrite(fd, left_back_pwm);
-    wiringPiI2CWrite(fd, direction);
+void OffboardControl::sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm) {
+    wiringPiI2CWrite(fd, throttle_pwm);
+    wiringPiI2CWrite(fd, steering_pwm);
 }
 
 // Function to display PWM values
-void OffboardControl::printPWM(uint8_t pwmValues[], uint8_t direction) {
+void OffboardControl::printPWM(int16_t pwmValues[]) {
     clear(); // Clear the screen
     mvprintw(0, 0, "PWM Values:");
-    mvprintw(1, 0, "Motor 1: %d", pwmValues[0]);
-    mvprintw(2, 0, "Motor 2: %d", pwmValues[1]);
-    mvprintw(3, 0, "Motor 3: %d", pwmValues[2]);
-    mvprintw(4, 0, "Motor 4: %d", pwmValues[3]);
-    switch (direction)
-    {
-    case FORWARD:
-        mvprintw(5, 0, "FORWARD");
-        break;
-    case BACKWARD:
-        mvprintw(5, 0, "BACKWARD");
-        break;
-    case TURNLEFT:
-        mvprintw(5, 0, "TURNLEFT");
-        break;
-    case TURNRIGHT:
-        mvprintw(5, 0, "TURNRIGHT");
-        break;
-    default:
-        break;
-    }
-    refresh(); // Refresh the screen
-}
-
-void OffboardControl::printPWM(uint8_t pwmValues[]) {
-    clear(); // Clear the screen
-    mvprintw(0, 0, "PWM Values:");
-    mvprintw(1, 0, "Motor 1: %d", pwmValues[0]);
-    mvprintw(2, 0, "Motor 2: %d", pwmValues[1]);
-    mvprintw(3, 0, "Motor 3: %d", pwmValues[2]);
-    mvprintw(4, 0, "Motor 4: %d", pwmValues[3]);
+    mvprintw(1, 0, "Throttle: %d", pwmValues[0]);
+    mvprintw(2, 0, "Steering: %d", pwmValues[1]);
     refresh(); // Refresh the screen
 }
