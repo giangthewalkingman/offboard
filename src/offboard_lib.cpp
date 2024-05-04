@@ -117,10 +117,7 @@ void OffboardControl::landing() {
 }
 
 void OffboardControl::sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm) {
-    fd = wiringPiI2CSetup(DEVICE_ID);
-    wiringPiI2CWrite(fd, throttle_pwm);
-    fd = wiringPiI2CSetup(DEVICE_ID);
-    wiringPiI2CWrite(fd, steering_pwm);
+    wiringPiI2CWriteReg8(fd, throttle_pwm, steering_pwm);
 }
 
 // Function to display PWM values
