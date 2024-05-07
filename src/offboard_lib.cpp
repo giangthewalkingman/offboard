@@ -3,7 +3,8 @@
 OffboardControl::OffboardControl(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private, bool input_setpoint) : nh_(nh),
                                                                                                                       nh_private_(nh_private)                                        
                                                                                                                       {
-    arm_mode_sub = nh_.subscribe("arm_mode", 10, &OffboardControl::armModeCallback, this);
+    arm_mode_sub = nh_.subscribe("/arm_mode", 10, &OffboardControl::armModeCallback, this);
+    odom_sub = nh_.subscribe("/camera/odom/sample", 10, &OffboardControl::odomCallback, this);
     nh_private_.param<bool>("/offboard_node/arm_mode_enable", arm_mode_.data);
     
     operation_time_1 = ros::Time::now();
@@ -17,7 +18,6 @@ OffboardControl::~OffboardControl() {
 }
 
 void OffboardControl::offboard() {
-    std::printf("[ INFO] Armed. \n");
     std::printf("Choose mode: \n");
     std::printf("(1) Control with keyboard: \n");
     std::printf("(2) Mission: \n");
@@ -38,21 +38,29 @@ void OffboardControl::offboard() {
 void OffboardControl::i2cSetup() {
     fd = wiringPiI2CSetup(DEVICE_ID);
     if (fd == -1) {
-        std::cout << "Failed to init I2C communication.\n";
+        std::cout << "[ INFO] FCU not connected.\n";
     } else {
-        std::cout << "I2C communication successfully setup.\n";
+        std::cout << "[ INFO] FCU connected.\n";
     }
 }
 
 void OffboardControl::waitForArming(double hz) {
     ros::Rate rate(hz);
+    std::printf("[ INFO] Waiting for Odometry... \n");
+    while (ros::ok() && !odom_received_) {
+        ros::spinOnce();
+        rate.sleep();
+    }
+    std::printf("[ INFO] Odometry received \n");
     std::printf("[ INFO] Waiting for Arming... \n");
     while(ros::ok() && arm_mode_.data == false) {
         rate.sleep();
         ros::spinOnce();
     }
+    // set the default pwm rate before arming
     pwmValue[0] = 127;
     pwmValue[1] = 127;
+    std::printf("[ INFO] Armed. \n");
 }
 
 void OffboardControl::teleopControl() {
@@ -94,6 +102,13 @@ void OffboardControl::teleopControl() {
 
 void OffboardControl::armModeCallback(const std_msgs::Bool::ConstPtr &msg) {
     arm_mode_ = *msg;
+}
+
+void OffboardControl::odomCallback(const nav_msgs::Odometry &odomMsg){
+  current_odom_ = odomMsg;
+  yaw_ = tf::getYaw(current_odom_.pose.pose.orientation);
+  robot_pos_ = toEigen(odomMsg.pose.pose.position);
+  odom_received_ = true;
 }
 
 // Function to initialize ncurses and keyboard input

@@ -3,12 +3,15 @@ project(offboard)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  rospy
   roslaunch
   # rospy
   std_msgs
+  nav_msgs
   # mav_trajectory_generation 
   # mav_trajectory_generation_ros
   message_generation
+  roslib
 )
 
 # add_definitions(-std c++17)
@@ -27,7 +30,7 @@ generate_messages(
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES offboard
-   CATKIN_DEPENDS roscpp std_msgs message_runtime
+   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime nav_msgs
 #  DEPENDS system_lib
 )
 
@@ -55,30 +58,30 @@ target_link_libraries(offboard_lib
 
 ############################################
 # for build on your laptop
-# target_link_libraries(offboard_lib 
-#   /usr/lib/x86_64-linux-gnu/libcurses.so
-# )
+target_link_libraries(offboard_lib 
+  /usr/lib/x86_64-linux-gnu/libcurses.so
+)
 
-# target_link_libraries(offboard_lib 
-#   /usr/lib/x86_64-linux-gnu/libncurses.so
-# )
+target_link_libraries(offboard_lib 
+  /usr/lib/x86_64-linux-gnu/libncurses.so
+)
 
-# target_link_libraries(offboard_lib 
-# /usr/lib/x86_64-linux-gnu/librt.so
-# )
+target_link_libraries(offboard_lib 
+/usr/lib/x86_64-linux-gnu/librt.so
+)
 
 # for build on rpi server
-target_link_libraries(offboard_lib 
-  /usr/lib/aarch64-linux-gnu/libcurses.so
-)
+# target_link_libraries(offboard_lib 
+#   /usr/lib/aarch64-linux-gnu/libcurses.so
+# )
 
-target_link_libraries(offboard_lib 
-  /usr/lib/aarch64-linux-gnu/libncurses.so
-)
+# target_link_libraries(offboard_lib 
+#   /usr/lib/aarch64-linux-gnu/libncurses.so
+# )
 
-target_link_libraries(offboard_lib 
-  /usr/lib/aarch64-linux-gnu/librt.so
-)
+# target_link_libraries(offboard_lib 
+#   /usr/lib/aarch64-linux-gnu/librt.so
+# )
 
 #############################################
 

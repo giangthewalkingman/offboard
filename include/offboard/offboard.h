@@ -1,44 +1,25 @@
 #ifndef OFFBOARD_H_
 #define OFFBOARD_H_
 
-#include<ros/ros.h>
-#include<ros/time.h>
-#include<iostream>
-#include<cmath>
-#include<cstdio>
-#include<string>
-#include<vector>
-#include<unistd.h>
-#include<ncurses.h>
-#include<curses.h>
-#include<wiringPi.h>
-#include<wiringPiI2C.h>
-#include<std_msgs/Bool.h>
+#include <ros/ros.h>
+#include <ros/time.h>
+#include <iostream>
+#include <cmath>
+#include <cstdio>
+#include <string>
+#include <vector>
+#include <unistd.h>
+#include <ncurses.h>
+#include <curses.h>
+#include <wiringPi.h>
+#include <wiringPiI2C.h>
+#include <std_msgs/Bool.h>
+#include <nav_msgs/Odometry.h>
+#include <eigen3/Eigen/Dense> 
+#include <tf/tf.h>
+#include <tf/transform_datatypes.h>
 
 #define DEVICE_ID 0x08
-#define FORWARD 15
-#define BACKWARD 0
-#define TURNLEFT 10
-#define TURNRIGHT 5
-#define STOP 17
-
-// direction rule: rf-lf-rb-lb, 1=forward, 0=backward
-// 0000 = 0     -> backward
-// 0001
-// 0010
-// 0100
-// 1000
-// 0011
-// 0110
-// 1100
-// 1001
-// 1010 = 10    -> turn left
-// 0101 = 5     -> turn right
-// 0111
-// 1110
-// 1101
-// 1011
-// 1111 = 15    -> forward
 
 class OffboardControl
 {
@@ -50,17 +31,25 @@ class OffboardControl
 	ros::NodeHandle nh_private_;
 
     ros::Subscriber arm_mode_sub;
+    ros::Subscriber odom_sub; // odometry subscriber
+
+    ros::Publisher odom_error_pub; //publish odom error before arm
 
     std_msgs::Bool arm_mode_;
+    nav_msgs::Odometry current_odom_;
+    ros::Time operation_time_1, operation_time_2;
+    Eigen::Vector3d robot_pos_;
 
     int fd = 0;
 
     // right front - left front - right back - left back
     int16_t pwmValue[2];
     int16_t PWM_INCREMENT = 5;
-    ros::Time operation_time_1, operation_time_2;
+    bool odom_received_ = false; // check received odometry or not
+    double yaw_ = 0;
 
     void armModeCallback(const std_msgs::Bool::ConstPtr &msg);
+    void odomCallback(const nav_msgs::Odometry &odomMsg);
 
     void offboard();
     void landing();
@@ -72,5 +61,24 @@ class OffboardControl
     void printPWM(int16_t pwmValues[]);
     void sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm);
 };
+
+Eigen::Vector3d toEigen(const geometry_msgs::Point &p) {
+  Eigen::Vector3d ev3(p.x, p.y, p.z);
+  return ev3;
+}
+
+Eigen::Vector3d toEigen(const geometry_msgs::PoseStamped &p) {
+  return toEigen(p.pose.position);
+}
+
+Eigen::Quaterniond toEigen(const geometry_msgs::Quaternion &p) {
+  Eigen::Quaterniond q4(p.w ,p.x, p.y, p.z);
+    return q4;
+}
+
+inline Eigen::Vector3d toEigen(const geometry_msgs::Vector3 &v3) {
+  Eigen::Vector3d ev3(v3.x, v3.y, v3.z);
+  return ev3;
+}
 
 #endif
