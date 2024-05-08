@@ -47,6 +47,10 @@ class OffboardControl
     int16_t PWM_INCREMENT = 5;
     bool odom_received_ = false; // check received odometry or not
     double yaw_ = 0;
+    const double length = 20.0;
+    double steering_noise = 0.0;
+    double distance_noise = 0.0;
+    double steering_drift = 0.0;
 
     void armModeCallback(const std_msgs::Bool::ConstPtr &msg);
     void odomCallback(const nav_msgs::Odometry &odomMsg);
@@ -60,6 +64,7 @@ class OffboardControl
     void cleanupNcurses();
     void printPWM(int16_t pwmValues[]);
     void sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm);
+    void PidTest();
 };
 
 Eigen::Vector3d toEigen(const geometry_msgs::Point &p) {

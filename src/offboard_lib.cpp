@@ -29,7 +29,9 @@ void OffboardControl::offboard() {
     case 1:
         teleopControl();
         break;
-    
+    case 2:
+        PidTest();
+        break;
     default:
         break;
     }
@@ -142,4 +144,47 @@ void OffboardControl::printPWM(int16_t pwmValues[]) {
     mvprintw(1, 0, "Throttle: %d", pwmValues[0]);
     mvprintw(2, 0, "Steering: %d", pwmValues[1]);
     refresh(); // Refresh the screen
+}
+
+void OffboardControl::PidTest() {
+    // PID controller parameters
+    double Kp = 0.1;
+    double Ki = 0.01;
+    double Kd = 0.05;
+
+    // Target setpoint
+    double target_setpoint = 0.0;
+
+    // PID controller variables
+    double error_prev = 0.0;
+    double integral = 0.0;
+
+    ros::Rate loop_rate(10); // Loop rate in Hz
+
+    while (ros::ok()) {
+        // Calculate error (difference between current position and target setpoint)
+        double error = target_setpoint - robot_pos_(1); // Assuming y-coordinate is the relevant position for steering control
+
+        // Proportional term
+        double proportional = Kp * error;
+
+        // Integral term
+        integral += Ki * error;
+
+        // Derivative term
+        double derivative = Kd * (error - error_prev);
+
+        // PID control signal
+        double steering_signal = proportional + integral + derivative;
+
+        // Apply control signal to steering
+        // Assuming 'steering_signal' is in PWM range
+        sendI2CMsg(pwmValue[0], static_cast<uint8_t>(steering_signal));
+
+        // Update error_prev for next iteration
+        error_prev = error;
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
 }
