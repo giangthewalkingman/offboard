@@ -46,49 +46,38 @@ include_directories(
 
 roslaunch_add_file_check(launch)
 
-add_library(offboard_lib
+add_library(offboard
   src/offboard_lib.cpp
+  src/pid_controller_base.cpp
 )
-target_link_libraries(offboard_lib
+target_link_libraries(offboard
   ${catkin_LIBRARIES}
 )
-target_link_libraries(offboard_lib
+target_link_libraries(offboard
   /usr/lib/libwiringPi.so
 )
 
 ############################################
 # for build on your laptop
-target_link_libraries(offboard_lib 
-  /usr/lib/x86_64-linux-gnu/libcurses.so
-)
-
-target_link_libraries(offboard_lib 
-  /usr/lib/x86_64-linux-gnu/libncurses.so
-)
-
-target_link_libraries(offboard_lib 
-/usr/lib/x86_64-linux-gnu/librt.so
-)
+# target_link_libraries(offboard
+#   /usr/lib/x86_64-linux-gnu/libcurses.so
+#   /usr/lib/x86_64-linux-gnu/libncurses.so
+#   /usr/lib/x86_64-linux-gnu/librt.so
+# )
 
 # for build on rpi server
-# target_link_libraries(offboard_lib 
-#   /usr/lib/aarch64-linux-gnu/libcurses.so
-# )
-
-# target_link_libraries(offboard_lib 
-#   /usr/lib/aarch64-linux-gnu/libncurses.so
-# )
-
-# target_link_libraries(offboard_lib 
-#   /usr/lib/aarch64-linux-gnu/librt.so
-# )
+target_link_libraries(offboard
+  /usr/lib/aarch64-linux-gnu/libcurses.so
+  /usr/lib/aarch64-linux-gnu/libncurses.so
+  /usr/lib/aarch64-linux-gnu/librt.so
+)
 
 #############################################
 
 
-add_executable(offboard_node src/offboard_node.cpp)
+add_executable(offboard_node src/offboard_node.cpp src/offboard_lib.cpp src/pid_controller_base.cpp)
 target_link_libraries(offboard_node
-  offboard_lib
+  offboard
 )
 
 add_executable(setmode_offb src/setmode_offb.cpp)

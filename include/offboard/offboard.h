@@ -67,16 +67,16 @@ class OffboardControl
     void PidTest();
 };
 
-Eigen::Vector3d toEigen(const geometry_msgs::Point &p) {
+inline Eigen::Vector3d toEigen(const geometry_msgs::Point &p) {
   Eigen::Vector3d ev3(p.x, p.y, p.z);
   return ev3;
 }
 
-Eigen::Vector3d toEigen(const geometry_msgs::PoseStamped &p) {
+inline Eigen::Vector3d toEigen(const geometry_msgs::PoseStamped &p) {
   return toEigen(p.pose.position);
 }
 
-Eigen::Quaterniond toEigen(const geometry_msgs::Quaternion &p) {
+inline Eigen::Quaterniond toEigen(const geometry_msgs::Quaternion &p) {
   Eigen::Quaterniond q4(p.w ,p.x, p.y, p.z);
     return q4;
 }
