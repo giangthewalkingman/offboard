@@ -136,7 +136,7 @@ void OffboardControl::landing() {
 
 void OffboardControl::sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm, uint8_t flags) {
     i2c_flag_ = flags & 0x01;
-    uint16_t throttle_steering_pwm = throttle_pwm << 8 | steering_pwm << 0;
+    uint16_t throttle_steering_pwm = steering_pwm << 8 | throttle_pwm << 0;
     wiringPiI2CWriteReg16(fd, flags, throttle_steering_pwm);
     // wiringPiI2CWriteReg8(fd, throttle_pwm, steering_pwm);
 }
