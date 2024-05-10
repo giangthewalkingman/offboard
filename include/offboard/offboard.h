@@ -46,6 +46,9 @@ class OffboardControl
     int16_t pwmValue[2];
     int16_t PWM_INCREMENT = 5;
     bool odom_received_ = false; // check received odometry or not
+    bool i2c_flag_ = false; 
+    bool rc_flag_ = false;
+    // uint8_t flags = 0;
     double yaw_ = 0;
     const double length = 20.0;
     double steering_noise = 0.0;
@@ -63,7 +66,8 @@ class OffboardControl
     void initNcurses();
     void cleanupNcurses();
     void printPWM(int16_t pwmValues[]);
-    void sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm);
+    // rc_flag_ << 1; i2c_flag_ << 0;  
+    void sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm, uint8_t flags);
     void PidTest();
 };
 

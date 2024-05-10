@@ -32,6 +32,7 @@ void OffboardControl::offboard() {
     case 2:
         PidTest();
         break;
+    // case 3 will have RC flag and Cancel is case 4
     default:
         break;
     }
@@ -94,7 +95,7 @@ void OffboardControl::teleopControl() {
                 pwmValue[i] = 255;
             }
         }
-        sendI2CMsg(pwmValue[0], pwmValue[1]);
+        sendI2CMsg(pwmValue[0], pwmValue[1], 1);
         printPWM(pwmValue); 
     }
 
@@ -127,14 +128,17 @@ void OffboardControl::cleanupNcurses() {
 }
 
 void OffboardControl::landing() {
-    sendI2CMsg(0, 0);
+    sendI2CMsg(0, 0, 0);
     operation_time_2 = ros::Time::now();
     std::printf("\n[ INFO] Operation time %.1f (s)\n\n", (operation_time_2 - operation_time_1).toSec());
     ros::shutdown();
 }
 
-void OffboardControl::sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm) {
-    wiringPiI2CWriteReg8(fd, throttle_pwm, steering_pwm);
+void OffboardControl::sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm, uint8_t flags) {
+    i2c_flag_ = flags & 0x01;
+    uint16_t throttle_steering_pwm = throttle_pwm << 8 | steering_pwm << 0;
+    wiringPiI2CWriteReg16(fd, flags, throttle_steering_pwm);
+    // wiringPiI2CWriteReg8(fd, throttle_pwm, steering_pwm);
 }
 
 // Function to display PWM values
@@ -179,7 +183,7 @@ void OffboardControl::PidTest() {
 
         // Apply control signal to steering
         // Assuming 'steering_signal' is in PWM range
-        sendI2CMsg(pwmValue[0], static_cast<uint8_t>(steering_signal));
+        sendI2CMsg(pwmValue[0], static_cast<uint8_t>(steering_signal), 1);
 
         // Update error_prev for next iteration
         error_prev = error;
