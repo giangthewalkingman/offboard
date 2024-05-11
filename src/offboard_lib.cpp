@@ -5,6 +5,8 @@ OffboardControl::OffboardControl(const ros::NodeHandle &nh, const ros::NodeHandl
                                                                                                                       {
     arm_mode_sub = nh_.subscribe("/arm_mode", 10, &OffboardControl::armModeCallback, this);
     odom_sub = nh_.subscribe("/odom", 1, &OffboardControl::odomCallback, this);
+    target_yaw_sub = nh_.subscribe("/target_yaw_sub", 1, &OffboardControl::yawCallback, this);
+
     // subOdom = nh_.subscribe<nav_msgs::Odometry> ("/state_estimation", 5, odomHandler);
     nh_private_.param<bool>("/offboard_node/arm_mode_enable", arm_mode_.data);
     
@@ -106,6 +108,10 @@ void OffboardControl::teleopControl() {
     landing();
 }
 
+void OffboardControl::yawCallback(const std_msgs::Float32 &yawMsg) {
+    target_yaw  = yawMsg.data;
+}
+
 void OffboardControl::armModeCallback(const std_msgs::Bool::ConstPtr &msg) {
     arm_mode_ = *msg;
 }
@@ -193,7 +199,6 @@ void OffboardControl::PidTest() {
 
         // PID control signal
         double steering_signal = proportional + integral + derivative;
-
         // Apply control signal to steering
         // Assuming 'steering_signal' is in PWM range
         sendI2CMsg(pwmValue[0], static_cast<uint8_t>(steering_signal), 1);
@@ -208,8 +213,8 @@ void OffboardControl::PidTest() {
 
 void OffboardControl::setpointTest() {
     ros::Rate loop_rate(10);
-    std::cout << "Input yaw: ";
-    std::cin >> target_yaw;
+    // std::cout << "Input yaw: ";
+    // std::cin >> target_yaw;
     while(ros::ok()) {
         yaw_error = target_yaw - vehicleYaw;
         if(yaw_error < -2*PI) {
