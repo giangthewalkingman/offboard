@@ -4,7 +4,8 @@ OffboardControl::OffboardControl(const ros::NodeHandle &nh, const ros::NodeHandl
                                                                                                                       nh_private_(nh_private)                                        
                                                                                                                       {
     arm_mode_sub = nh_.subscribe("/arm_mode", 10, &OffboardControl::armModeCallback, this);
-    odom_sub = nh_.subscribe("/camera/odom/sample", 10, &OffboardControl::odomCallback, this);
+    odom_sub = nh_.subscribe("/camera/odom/sample", 1, &OffboardControl::odomCallback, this);
+    // subOdom = nh_.subscribe<nav_msgs::Odometry> ("/state_estimation", 5, odomHandler);
     nh_private_.param<bool>("/offboard_node/arm_mode_enable", arm_mode_.data);
     
     operation_time_1 = ros::Time::now();
@@ -32,7 +33,9 @@ void OffboardControl::offboard() {
     case 2:
         PidTest();
         break;
-    // case 3 will have RC flag and Cancel is case 4
+    case 3:
+        setpointTest();
+    // case n will have RC flag and Cancel is case n+1
     default:
         break;
     }
@@ -110,7 +113,17 @@ void OffboardControl::armModeCallback(const std_msgs::Bool::ConstPtr &msg) {
 void OffboardControl::odomCallback(const nav_msgs::Odometry &odomMsg){
   current_odom_ = odomMsg;
   yaw_ = tf::getYaw(current_odom_.pose.pose.orientation);
-  robot_pos_ = toEigen(odomMsg.pose.pose.position);
+  odomTime = odomMsg.header.stamp.toSec();
+  geometry_msgs::Quaternion geoQuat = odomMsg.pose.pose.orientation;
+  geometry_msgs::Vector3 velocity_base = odomMsg.twist.twist.linear;
+  tf::Matrix3x3(tf::Quaternion(geoQuat.x, geoQuat.y, geoQuat.z, geoQuat.w)).getRPY(roll, pitch, yaw);
+  vehicleVBase = toEigen(velocity_base);
+  vehicleRoll = roll;
+  vehiclePitch = pitch;
+  vehicleYaw = yaw;
+  vehicle_pos_(0) = odomMsg.pose.pose.position.x - cos(yaw) * sensorOffsetX + sin(yaw) * sensorOffsetY;
+  vehicle_pos_(1) = odomMsg.pose.pose.position.y - sin(yaw) * sensorOffsetX - cos(yaw) * sensorOffsetY;
+  vehicle_pos_(2) = odomMsg.pose.pose.position.z;
   odom_received_ = true;
 }
 
@@ -167,7 +180,7 @@ void OffboardControl::PidTest() {
 
     while (ros::ok()) {
         // Calculate error (difference between current position and target setpoint)
-        double error = target_setpoint - robot_pos_(1); // Assuming y-coordinate is the relevant position for steering control
+        double error = target_setpoint - vehicle_pos_(1); // Assuming y-coordinate is the relevant position for steering control
 
         // Proportional term
         double proportional = Kp * error;
@@ -191,4 +204,29 @@ void OffboardControl::PidTest() {
         ros::spinOnce();
         loop_rate.sleep();
     }
+}
+
+void OffboardControl::setpointTest() {
+    ros::Rate loop_rate(10);
+    std::cout << "Input setpoint: ";
+    std::cin >> target_setpoint(0) >> target_setpoint(1);
+    target_yaw = atan(abs(target_setpoint(0)/target_setpoint(1)));
+    while(ros::ok()) {
+        yaw_error = target_yaw - vehicleYaw;
+        if(yaw_error < 2*PI) {
+            yaw_error += 2*PI;
+        } else if (yaw_error > 2*PI) {
+            yaw_error -= 2*PI;
+        }
+        double steering_value = Kp*yaw_error;
+        steering_value += 127;
+        if(steering_value < 1) {
+            steering_value = 1;
+        } else if(steering_value > 254) {
+            steering_value = 254;
+        }
+        // sendI2CMsg(127, (uint8_t)steering_value, 1);
+        ROS_INFO_STREAM(steering_value);
+    }
+
 }

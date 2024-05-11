@@ -31,6 +31,7 @@ class OffboardControl
 	ros::NodeHandle nh_private_;
 
     ros::Subscriber arm_mode_sub;
+    ros::Subscriber subOdom ;
     ros::Subscriber odom_sub; // odometry subscriber
 
     ros::Publisher odom_error_pub; //publish odom error before arm
@@ -38,9 +39,13 @@ class OffboardControl
     std_msgs::Bool arm_mode_;
     nav_msgs::Odometry current_odom_;
     ros::Time operation_time_1, operation_time_2;
-    Eigen::Vector3d robot_pos_;
+    Eigen::Vector3d vehicle_pos_;
 
     int fd = 0;
+    // for PID
+    const double PI = 3.141592653589793238463; // PI
+    double Kp = 30, Ki, Kd;
+
 
     // right front - left front - right back - left back
     int16_t pwmValue[2];
@@ -69,6 +74,17 @@ class OffboardControl
     // rc_flag_ << 1; i2c_flag_ << 0;  
     void sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm, uint8_t flags);
     void PidTest();
+    void odomHandler();
+    double odomTime = 0;
+    double sensorOffsetX = 0;
+    double sensorOffsetY = 0;
+    double roll, pitch, yaw;
+    double vehicleRoll = 0, vehicleYaw = 0, vehiclePitch = 0, vehicleX = 0, vehicleY = 0, vehicleZ = 0;
+    Eigen::Vector3d vehicleVBase = Eigen::Vector3d::Zero();
+    void setpointTest();
+    Eigen::Vector3d target_setpoint;
+    double target_yaw;
+    double yaw_error = 0;
 };
 
 inline Eigen::Vector3d toEigen(const geometry_msgs::Point &p) {
