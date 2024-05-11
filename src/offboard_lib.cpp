@@ -213,7 +213,7 @@ void OffboardControl::setpointTest() {
     target_yaw = atan(abs(target_setpoint(0)/target_setpoint(1)));
     while(ros::ok()) {
         yaw_error = target_yaw - vehicleYaw;
-        if(yaw_error < 2*PI) {
+        if(yaw_error < -2*PI) {
             yaw_error += 2*PI;
         } else if (yaw_error > 2*PI) {
             yaw_error -= 2*PI;
