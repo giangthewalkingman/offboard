@@ -118,12 +118,12 @@ void OffboardControl::odomCallback(const nav_msgs::Odometry &odomMsg){
   geometry_msgs::Vector3 velocity_base = odomMsg.twist.twist.linear;
  
   vehicleVBase = toEigen(velocity_base);
-
-  Eigen::Vector3d euler = toEigen(odomMsg.pose.pose.orientation).toRotationMatrix().eulerAngles(2, 1, 0);
+  Eigen::Quaterniond quat = toEigen(odomMsg.pose.pose.orientation);
+  Eigen::Vector3d euler = quat.toRotationMatrix().eulerAngles(2, 1, 0);
   vehicleRoll = euler(2);
   vehiclePitch = euler(1);
   vehicleYaw = euler(0);
-  ROS_INFO_STREAM(euler(0)<<"yaw");
+  ROS_INFO_STREAM("quat"<<quat.w()<<" "<<quat.x()<<" "<<quat.y()<<" "<<quat.z()<<" "<<euler(0)<<"yaw");
   vehicle_pos_(0) = odomMsg.pose.pose.position.x - cos(yaw) * sensorOffsetX + sin(yaw) * sensorOffsetY;
   vehicle_pos_(1) = odomMsg.pose.pose.position.y - sin(yaw) * sensorOffsetX - cos(yaw) * sensorOffsetY;
   vehicle_pos_(2) = odomMsg.pose.pose.position.z;
