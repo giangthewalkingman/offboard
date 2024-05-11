@@ -230,6 +230,9 @@ void OffboardControl::setpointTest() {
         }
         // sendI2CMsg(127, (uint8_t)steering_value, 1);
         ROS_INFO_STREAM("target_yaw: "<<target_yaw << "\t yaw error: "<< yaw_error << "\t vehicle yaw" << vehicleYaw << "\t steering value: " << steering_value);
+    ros::spinOnce();
+    loop_rate.sleep();
     }
+
 
 }
