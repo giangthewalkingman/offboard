@@ -59,18 +59,18 @@ target_link_libraries(offboard
 
 ############################################
 # for build on your laptop
-# target_link_libraries(offboard
-#   /usr/lib/x86_64-linux-gnu/libcurses.so
-#   /usr/lib/x86_64-linux-gnu/libncurses.so
-#   /usr/lib/x86_64-linux-gnu/librt.so
-# )
+target_link_libraries(offboard
+  /usr/lib/x86_64-linux-gnu/libcurses.so
+  /usr/lib/x86_64-linux-gnu/libncurses.so
+  /usr/lib/x86_64-linux-gnu/librt.so
+)
 
 # for build on rpi server
-target_link_libraries(offboard
-  /usr/lib/aarch64-linux-gnu/libcurses.so
-  /usr/lib/aarch64-linux-gnu/libncurses.so
-  /usr/lib/aarch64-linux-gnu/librt.so
-)
+# target_link_libraries(offboard
+#   /usr/lib/aarch64-linux-gnu/libcurses.so
+#   /usr/lib/aarch64-linux-gnu/libncurses.so
+#   /usr/lib/aarch64-linux-gnu/librt.so
+# )
 
 #############################################
 

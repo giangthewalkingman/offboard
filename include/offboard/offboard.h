@@ -14,6 +14,7 @@
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Float32.h>
 #include <nav_msgs/Odometry.h>
 #include <eigen3/Eigen/Dense> 
 #include <tf/tf.h>
@@ -33,6 +34,7 @@ class OffboardControl
     ros::Subscriber arm_mode_sub;
     ros::Subscriber subOdom ;
     ros::Subscriber odom_sub; // odometry subscriber
+    ros::Subscriber target_yaw_sub;
 
     ros::Publisher odom_error_pub; //publish odom error before arm
 
@@ -62,6 +64,7 @@ class OffboardControl
 
     void armModeCallback(const std_msgs::Bool::ConstPtr &msg);
     void odomCallback(const nav_msgs::Odometry &odomMsg);
+    void yawCallback(const std_msgs::Float32 &yawMsg);
 
     void offboard();
     void landing();
@@ -83,7 +86,7 @@ class OffboardControl
     Eigen::Vector3d vehicleVBase = Eigen::Vector3d::Zero();
     void setpointTest();
     Eigen::Vector3d target_setpoint;
-    double target_yaw;
+    double target_yaw = 0;
     double yaw_error = 0;
 };
 
@@ -105,5 +108,17 @@ inline Eigen::Vector3d toEigen(const geometry_msgs::Vector3 &v3) {
   Eigen::Vector3d ev3(v3.x, v3.y, v3.z);
   return ev3;
 }
+
+inline double ToEulerYaw(const Eigen::Quaterniond& q){
+    Eigen::Vector3d angles;    //yaw pitch roll
+    const auto x = q.x();
+    const auto y = q.y();
+    const auto z = q.z();
+    const auto w = q.w();
+    double siny_cosp = 2 * (w * z + x * y);
+    double cosy_cosp = 1 - 2 * (y * y + z * z);
+    double yaw = std::atan2(siny_cosp, cosy_cosp);
+    return yaw;
+  }
 
 #endif
