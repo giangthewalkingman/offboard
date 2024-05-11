@@ -208,9 +208,8 @@ void OffboardControl::PidTest() {
 
 void OffboardControl::setpointTest() {
     ros::Rate loop_rate(10);
-    std::cout << "Input setpoint: ";
-    std::cin >> target_setpoint(0) >> target_setpoint(1);
-    target_yaw = atan(abs(target_setpoint(0)/target_setpoint(1)));
+    std::cout << "Input yaw: ";
+    std::cin >> target_yaw;
     while(ros::ok()) {
         yaw_error = target_yaw - vehicleYaw;
         if(yaw_error < -2*PI) {
