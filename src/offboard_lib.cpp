@@ -4,7 +4,7 @@ OffboardControl::OffboardControl(const ros::NodeHandle &nh, const ros::NodeHandl
                                                                                                                       nh_private_(nh_private)                                        
                                                                                                                       {
     arm_mode_sub = nh_.subscribe("/arm_mode", 10, &OffboardControl::armModeCallback, this);
-    odom_sub = nh_.subscribe("/camera/odom/sample", 1, &OffboardControl::odomCallback, this);
+    odom_sub = nh_.subscribe("/odom", 1, &OffboardControl::odomCallback, this);
     // subOdom = nh_.subscribe<nav_msgs::Odometry> ("/state_estimation", 5, odomHandler);
     nh_private_.param<bool>("/offboard_node/arm_mode_enable", arm_mode_.data);
     
@@ -59,10 +59,10 @@ void OffboardControl::waitForArming(double hz) {
     }
     std::printf("[ INFO] Odometry received \n");
     std::printf("[ INFO] Waiting for Arming... \n");
-    while(ros::ok() && arm_mode_.data == false) {
-        rate.sleep();
-        ros::spinOnce();
-    }
+    // while(ros::ok() && arm_mode_.data == false) {
+    //     rate.sleep();
+    //     ros::spinOnce();
+    // }
     // set the default pwm rate before arming
     pwmValue[0] = 127;
     pwmValue[1] = 127;
@@ -112,15 +112,18 @@ void OffboardControl::armModeCallback(const std_msgs::Bool::ConstPtr &msg) {
 
 void OffboardControl::odomCallback(const nav_msgs::Odometry &odomMsg){
   current_odom_ = odomMsg;
-  yaw_ = tf::getYaw(current_odom_.pose.pose.orientation);
+
   odomTime = odomMsg.header.stamp.toSec();
   geometry_msgs::Quaternion geoQuat = odomMsg.pose.pose.orientation;
   geometry_msgs::Vector3 velocity_base = odomMsg.twist.twist.linear;
-  tf::Matrix3x3(tf::Quaternion(geoQuat.x, geoQuat.y, geoQuat.z, geoQuat.w)).getRPY(roll, pitch, yaw);
+ 
   vehicleVBase = toEigen(velocity_base);
-  vehicleRoll = roll;
-  vehiclePitch = pitch;
-  vehicleYaw = yaw;
+
+  Eigen::Vector3d euler = toEigen(odomMsg.pose.pose.orientation).toRotationMatrix().eulerAngles(2, 1, 0);
+  vehicleRoll = euler(2);
+  vehiclePitch = euler(1);
+  vehicleYaw = euler(0);
+  ROS_INFO_STREAM(euler(0)<<"yaw");
   vehicle_pos_(0) = odomMsg.pose.pose.position.x - cos(yaw) * sensorOffsetX + sin(yaw) * sensorOffsetY;
   vehicle_pos_(1) = odomMsg.pose.pose.position.y - sin(yaw) * sensorOffsetX - cos(yaw) * sensorOffsetY;
   vehicle_pos_(2) = odomMsg.pose.pose.position.z;
@@ -131,7 +134,7 @@ void OffboardControl::odomCallback(const nav_msgs::Odometry &odomMsg){
 void OffboardControl::initNcurses() {
     initscr(); // Initialize ncurses
     cbreak();  // Line buffering disabled
-    noecho();  // Don't echo any keypresses
+    noecho();  // Don't echo any keypresses)
     keypad(stdscr, TRUE); // Enable keypad mode for arrow keys
 }
 
