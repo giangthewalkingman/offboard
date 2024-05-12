@@ -19,6 +19,7 @@
 #include <eigen3/Eigen/Dense> 
 #include <tf/tf.h>
 #include <tf/transform_datatypes.h>
+#include <offboard/PoseRequest.h>
 
 #define DEVICE_ID 0x08
 
@@ -35,13 +36,14 @@ class OffboardControl
     ros::Subscriber subOdom ;
     ros::Subscriber odom_sub; // odometry subscriber
     ros::Subscriber target_yaw_sub;
+    ros::Subscriber target_pose_sub;
 
     ros::Publisher odom_error_pub; //publish odom error before arm
 
     std_msgs::Bool arm_mode_;
     nav_msgs::Odometry current_odom_;
     ros::Time operation_time_1, operation_time_2;
-    Eigen::Vector3d vehicle_pos_;
+    Eigen::Vector3d vehicle_pos_, target_pos_;
 
     int fd = 0;
     // for PID
@@ -49,9 +51,8 @@ class OffboardControl
     double Kp = 30, Ki, Kd;
 
 
-    // right front - left front - right back - left back
-    int16_t pwmValue[2];
-    int16_t PWM_INCREMENT = 5;
+    double steering_value, throttle_value;
+    int16_t SPEED_INCREMENT = 5;
     bool odom_received_ = false; // check received odometry or not
     bool i2c_flag_ = false; 
     bool rc_flag_ = false;
@@ -65,6 +66,7 @@ class OffboardControl
     void armModeCallback(const std_msgs::Bool::ConstPtr &msg);
     void odomCallback(const nav_msgs::Odometry &odomMsg);
     void yawCallback(const std_msgs::Float32 &yawMsg);
+    void targetPoseCallback(const offboard::PoseRequest &poseMsg);
 
     void offboard();
     void landing();
@@ -73,21 +75,22 @@ class OffboardControl
     void waitForArming(double hz);
     void initNcurses();
     void cleanupNcurses();
-    void printPWM(int16_t pwmValues[]);
+    void printPWM(int16_t throttle_val, int16_t steering_val);
     // rc_flag_ << 1; i2c_flag_ << 0;  
     void sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm, uint8_t flags);
-    void PidTest();
     void odomHandler();
     double odomTime = 0;
     double sensorOffsetX = 0;
     double sensorOffsetY = 0;
     double roll, pitch, yaw;
     double vehicleRoll = 0, vehicleYaw = 0, vehiclePitch = 0, vehicleX = 0, vehicleY = 0, vehicleZ = 0;
+    double calculateDistance(const Eigen::Vector3d& pose1, const Eigen::Vector3d& pose2);
     Eigen::Vector3d vehicleVBase = Eigen::Vector3d::Zero();
-    void setpointTest();
+    void yawTest();
+    void pidTest();
     Eigen::Vector3d target_setpoint;
     double target_yaw = 0;
-    double yaw_error = 0;
+    double yaw_error = 0, target_error = 0;
 };
 
 inline Eigen::Vector3d toEigen(const geometry_msgs::Point &p) {

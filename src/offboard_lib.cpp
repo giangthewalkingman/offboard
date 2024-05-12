@@ -6,6 +6,7 @@ OffboardControl::OffboardControl(const ros::NodeHandle &nh, const ros::NodeHandl
     arm_mode_sub = nh_.subscribe("/arm_mode", 10, &OffboardControl::armModeCallback, this);
     odom_sub = nh_.subscribe("/odom", 1, &OffboardControl::odomCallback, this);
     target_yaw_sub = nh_.subscribe("/target_yaw_sub", 1, &OffboardControl::yawCallback, this);
+    target_pose_sub = nh_.subscribe("/target_pose_sub", 1, &OffboardControl::targetPoseCallback, this);
 
     // subOdom = nh_.subscribe<nav_msgs::Odometry> ("/state_estimation", 5, odomHandler);
     nh_private_.param<bool>("/offboard_node/arm_mode_enable", arm_mode_.data);
@@ -23,8 +24,9 @@ OffboardControl::~OffboardControl() {
 void OffboardControl::offboard() {
     std::printf("Choose mode: \n");
     std::printf("(1) Control with keyboard: \n");
-    std::printf("(2) Mission: \n");
-    std::printf("(3) Cancel: \n");
+    std::printf("(2) PID Test: \n");
+    std::printf("(3) Yaw Test: \n");
+    std::printf("(4) Cancel: \n");
     int mode;
     std::cin >> mode;
     switch (mode)
@@ -33,10 +35,12 @@ void OffboardControl::offboard() {
         teleopControl();
         break;
     case 2:
-        PidTest();
+        pidTest();
         break;
     case 3:
-        setpointTest();
+        yawTest();
+    case 4:
+        landing();
     // case n will have RC flag and Cancel is case n+1
     default:
         break;
@@ -66,8 +70,8 @@ void OffboardControl::waitForArming(double hz) {
     //     ros::spinOnce();
     // }
     // set the default pwm rate before arming
-    pwmValue[0] = 127;
-    pwmValue[1] = 127;
+    throttle_value = 127;
+    steering_value = 127;
     std::printf("[ INFO] Armed. \n");
 }
 
@@ -78,30 +82,33 @@ void OffboardControl::teleopControl() {
     while ((ch = getch()) != 'q') { // Loop until 'q' is pressed
         switch(ch) {
             case KEY_UP:
-                pwmValue[0]++;
+                throttle_value++;
                 break;
             case KEY_DOWN:
-                pwmValue[0]--;
+                throttle_value--;
                 break;
             case KEY_LEFT:
-                pwmValue[1]--;
+                steering_value--;
                 break;
             case KEY_RIGHT:
-                pwmValue[1]++;
+                steering_value++;
                 break;
             default:
                 std::cout << "Invalid input\n";
                 break;
         }
-        for(int i = 0; i < 2; i++) {
-            if(pwmValue[i] < 0) {
-                pwmValue[i] = 0;
-            } else if (pwmValue[i] > 255) {
-                pwmValue[i] = 255;
-            }
-        }
-        sendI2CMsg(pwmValue[0], pwmValue[1], 1);
-        printPWM(pwmValue); 
+        if(steering_value > 255) {
+            steering_value = 255;
+        } else if (steering_value < 0) {
+            steering_value = 0;
+        } 
+        if(throttle_value > 255) {
+            throttle_value = 255;
+        } else if (throttle_value < 0) {
+            throttle_value = 0;
+        } 
+        sendI2CMsg(throttle_value, steering_value, 1);
+        printPWM(throttle_value, steering_value); 
     }
 
     cleanupNcurses(); // Cleanup ncurses
@@ -133,6 +140,13 @@ void OffboardControl::odomCallback(const nav_msgs::Odometry &odomMsg){
   odom_received_ = true;
 }
 
+void OffboardControl::targetPoseCallback(const offboard::PoseRequest &poseMsg) {
+    target_pos_(0) = poseMsg.positionX;
+    target_pos_(1) = poseMsg.positionY;
+    target_pos_(2) = poseMsg.positionZ;
+    target_yaw = poseMsg.yaw;
+}
+
 // Function to initialize ncurses and keyboard input
 void OffboardControl::initNcurses() {
     initscr(); // Initialize ncurses
@@ -161,57 +175,15 @@ void OffboardControl::sendI2CMsg(uint8_t throttle_pwm, uint8_t steering_pwm, uin
 }
 
 // Function to display PWM values
-void OffboardControl::printPWM(int16_t pwmValues[]) {
+void OffboardControl::printPWM(int16_t throttle_val, int16_t steering_val) {
     clear(); // Clear the screen
     mvprintw(0, 0, "PWM Values:");
-    mvprintw(1, 0, "Throttle: %d", pwmValues[0]);
-    mvprintw(2, 0, "Steering: %d", pwmValues[1]);
+    mvprintw(1, 0, "Throttle: %d", throttle_val);
+    mvprintw(2, 0, "Steering: %d", steering_val);
     refresh(); // Refresh the screen
 }
 
-void OffboardControl::PidTest() {
-    // PID controller parameters
-    double Kp = 0.1;
-    double Ki = 0.01;
-    double Kd = 0.05;
-
-    // Target setpoint
-    double target_setpoint = 0.0;
-
-    // PID controller variables
-    double error_prev = 0.0;
-    double integral = 0.0;
-
-    ros::Rate loop_rate(10); // Loop rate in Hz
-
-    while (ros::ok()) {
-        // Calculate error (difference between current position and target setpoint)
-        double error = target_setpoint - vehicle_pos_(1); // Assuming y-coordinate is the relevant position for steering control
-
-        // Proportional term
-        double proportional = Kp * error;
-
-        // Integral term
-        integral += Ki * error;
-
-        // Derivative term
-        double derivative = Kd * (error - error_prev);
-
-        // PID control signal
-        double steering_signal = proportional + integral + derivative;
-        // Apply control signal to steering
-        // Assuming 'steering_signal' is in PWM range
-        sendI2CMsg(pwmValue[0], static_cast<uint8_t>(steering_signal), 1);
-
-        // Update error_prev for next iteration
-        error_prev = error;
-
-        ros::spinOnce();
-        loop_rate.sleep();
-    }
-}
-
-void OffboardControl::setpointTest() {
+void OffboardControl::yawTest() {
     ros::Rate loop_rate(10);
     // std::cout << "Input yaw: ";
     // std::cin >> target_yaw;
@@ -222,19 +194,54 @@ void OffboardControl::setpointTest() {
         } else if (yaw_error > 2*PI) {
             yaw_error -= 2*PI;
         }
-        double steering_value = Kp*yaw_error;
-        steering_value += 127;
-        if(steering_value < 1) {
-            steering_value = 1;
-        } else if(steering_value > 254) {
-            steering_value = 254;
+        steering_value = Kp*yaw_error + 127;
+        if(steering_value < 0) {
+            steering_value = 0;
+        } else if(steering_value > 255) {
+            steering_value = 255;
         }
-        // sendI2CMsg(127, (uint8_t)steering_value, 1);
         ROS_INFO_STREAM("target_yaw: "<<target_yaw << "\t yaw error: "<< yaw_error << "\t vehicle yaw" << vehicleYaw << "\t steering value: " << steering_value);
         sendI2CMsg(127, steering_value, 1);
     ros::spinOnce();
     loop_rate.sleep();
     }
+}
 
+void OffboardControl::pidTest() {
+    ros::Rate loop_rate(10);
+    while(ros::ok()) {
+        target_error = calculateDistance(vehicle_pos_, target_pos_);
+        yaw_error = target_yaw - vehicleYaw;
+        // yaw
+        if(yaw_error < -2*PI) {
+            yaw_error += 2*PI;
+        } else if (yaw_error > 2*PI) {
+            yaw_error -= 2*PI;
+        }
+        steering_value = Kp*yaw_error + 127;
+        if(steering_value < 0) {
+            steering_value = 0;
+        } else if(steering_value > 255) {
+            steering_value = 255;
+        }
+        ROS_INFO_STREAM("target_yaw: "<<target_yaw << "\t yaw error: "<< yaw_error << "\t vehicle yaw" << vehicleYaw << "\t steering value: " << steering_value);
+        // pose
+        throttle_value = std::abs(Kp*target_error*std::cos(yaw_error));
+        sendI2CMsg(throttle_value, steering_value, 1);
+    ros::spinOnce();
+    loop_rate.sleep();
+    }
+}
 
+double OffboardControl::calculateDistance(const Eigen::Vector3d& pose1, const Eigen::Vector3d& pose2) {
+    // Calculate the difference between the two poses
+    Eigen::Vector3d diff = pose2 - pose1;
+
+    // Calculate the squared Euclidean distance
+    double squared_distance = diff.squaredNorm();
+
+    // Take the square root to get the actual Euclidean distance
+    double distance = std::sqrt(squared_distance);
+
+    return distance;
 }
