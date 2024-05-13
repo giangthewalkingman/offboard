@@ -7,6 +7,7 @@ OffboardControl::OffboardControl(const ros::NodeHandle &nh, const ros::NodeHandl
     odom_sub = nh_.subscribe("/odom", 1, &OffboardControl::odomCallback, this);
     target_yaw_sub = nh_.subscribe("/target_yaw_sub", 1, &OffboardControl::yawCallback, this);
     target_pose_sub = nh_.subscribe("/target_pose_sub", 1, &OffboardControl::targetPoseCallback, this);
+    // current_mavros_pose_sub = nh_.subscribe("/mavros/vision_pose/pose", 1, &OffboardControl::currentMavrosPoseCallback, this);
 
     // subOdom = nh_.subscribe<nav_msgs::Odometry> ("/state_estimation", 5, odomHandler);
     nh_private_.param<bool>("/offboard_node/arm_mode_enable", arm_mode_.data);
@@ -115,6 +116,15 @@ void OffboardControl::teleopControl() {
     landing();
 }
 
+// void OffboardControl::currentMavrosPoseCallback(const geometry_msgs::PoseStamped &msg) {
+//     vehicle_pos_(0) = msg.pose.position.x;
+//     vehicle_pos_(1) = msg.pose.position.y;
+//     vehicle_pos_(2) = msg.pose.position.z;
+//     Eigen::Quaterniond quat = toEigen(msg.pose.orientation);
+//     vehicleYaw = ToEulerYaw(quat);
+//     odom_received_ = true;
+// }
+
 void OffboardControl::yawCallback(const std_msgs::Float32 &yawMsg) {
     target_yaw  = yawMsg.data;
 }
@@ -143,8 +153,7 @@ void OffboardControl::odomCallback(const nav_msgs::Odometry &odomMsg){
 void OffboardControl::targetPoseCallback(const offboard::PoseRequest &poseMsg) {
     target_pos_(0) = poseMsg.positionX;
     target_pos_(1) = poseMsg.positionY;
-    target_pos_(2) = poseMsg.positionZ;
-    target_yaw = poseMsg.yaw;
+    target_yaw = atan2(target_pos_(1),target_pos_(0));
 }
 
 // Function to initialize ncurses and keyboard input
@@ -227,7 +236,8 @@ void OffboardControl::pidTest() {
         ROS_INFO_STREAM("target_yaw: "<<target_yaw << "\t yaw error: "<< yaw_error << "\t vehicle yaw" << vehicleYaw << "\t steering value: " << steering_value);
         // pose
         throttle_value = std::abs(Kp*target_error*std::cos(yaw_error));
-        sendI2CMsg(throttle_value, steering_value, 1);
+        ROS_INFO_STREAM("target_error: "<<target_error << "\tthrottle value: " << throttle_value);
+        // sendI2CMsg(throttle_value, steering_value, 1);
     ros::spinOnce();
     loop_rate.sleep();
     }

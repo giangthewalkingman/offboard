@@ -20,6 +20,7 @@
 #include <tf/tf.h>
 #include <tf/transform_datatypes.h>
 #include <offboard/PoseRequest.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #define DEVICE_ID 0x08
 
@@ -35,6 +36,7 @@ class OffboardControl
     ros::Subscriber arm_mode_sub;
     ros::Subscriber subOdom ;
     ros::Subscriber odom_sub; // odometry subscriber
+    ros::Subscriber current_mavros_pose_sub;
     ros::Subscriber target_yaw_sub;
     ros::Subscriber target_pose_sub;
 
@@ -67,6 +69,7 @@ class OffboardControl
     void odomCallback(const nav_msgs::Odometry &odomMsg);
     void yawCallback(const std_msgs::Float32 &yawMsg);
     void targetPoseCallback(const offboard::PoseRequest &poseMsg);
+    void currentMavrosPoseCallback(const geometry_msgs::PoseStamped &msg);
 
     void offboard();
     void landing();
