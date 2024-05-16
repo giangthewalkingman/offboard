@@ -51,6 +51,7 @@ void OffboardControl::offboard() {
 void OffboardControl::i2cSetup() {
     fd = wiringPiI2CSetup(DEVICE_ID);
     if (fd == -1) {
+        sendI2CMsg(127, 127, 1);
         std::cout << "[ INFO] FCU not connected.\n";
     } else {
         std::cout << "[ INFO] FCU connected.\n";
