@@ -54,6 +54,7 @@ void OffboardControl::i2cSetup() {
         // sendI2CMsg(127, 127, 1);
         std::cout << "[ INFO] FCU not connected.\n";
     } else {
+        sendI2CMsg(127, 127, 1);
         std::cout << "[ INFO] FCU connected.\n";
     }
 }
@@ -238,7 +239,7 @@ void OffboardControl::pidTest() {
         // pose
         throttle_value = std::abs(Kp*target_error*std::cos(yaw_error)) + 127;
         ROS_INFO_STREAM("target_error: "<<target_error << "\tthrottle value: " << throttle_value);
-        // sendI2CMsg(throttle_value, steering_value, 1);
+        sendI2CMsg(throttle_value, steering_value, 1);
     ros::spinOnce();
     loop_rate.sleep();
     }
