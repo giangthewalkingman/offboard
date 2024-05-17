@@ -51,7 +51,7 @@ void OffboardControl::offboard() {
 void OffboardControl::i2cSetup() {
     fd = wiringPiI2CSetup(DEVICE_ID);
     if (fd == -1) {
-        sendI2CMsg(127, 127, 1);
+        // sendI2CMsg(127, 127, 1);
         std::cout << "[ INFO] FCU not connected.\n";
     } else {
         std::cout << "[ INFO] FCU connected.\n";
@@ -61,10 +61,10 @@ void OffboardControl::i2cSetup() {
 void OffboardControl::waitForArming(double hz) {
     ros::Rate rate(hz);
     std::printf("[ INFO] Waiting for Odometry... \n");
-    // while (ros::ok() && !odom_received_) {
-    //     ros::spinOnce();
-    //     rate.sleep();
-    // }
+    while (ros::ok() && !odom_received_) {
+        ros::spinOnce();
+        rate.sleep();
+    }
     std::printf("[ INFO] Odometry received \n");
     std::printf("[ INFO] Waiting for Arming... \n");
     // while(ros::ok() && arm_mode_.data == false) {
