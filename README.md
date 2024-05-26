@@ -23,5 +23,5 @@
 * On the raspberry pi, the code works well
 
 ## Versions
-* raspberry pi: 3b+, 1gb ram, ubuntu server 20.04
+* raspberry pi: 4b, 1gb ram, ubuntu server 20.04
 * ros: noetic

@@ -236,8 +236,8 @@ void OffboardControl::pidTest() {
             steering_value = 255;
         }
         ROS_INFO_STREAM("target_yaw: "<<target_yaw << "\t yaw error: "<< yaw_error << "\t vehicle yaw" << vehicleYaw << "\t steering value: " << steering_value);
-        // pose
-        throttle_value = std::abs(Kp*target_error*std::cos(yaw_error)) + 127;
+        // postion
+        throttle_value = Kp*target_error*std::cos(yaw_error) + 127;
         ROS_INFO_STREAM("target_error: "<<target_error << "\tthrottle value: " << throttle_value);
         sendI2CMsg(throttle_value, steering_value, 1);
     ros::spinOnce();
