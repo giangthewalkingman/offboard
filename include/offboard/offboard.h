@@ -50,8 +50,8 @@ class OffboardControl
     int fd = 0;
     // for PID
     const double PI = 3.141592653589793238463; // PI
-    double Kp = 30, Ki, Kd;
-
+    double Kp_yaw = -30, Ki_yaw, Kd_yaw;
+    double Kp_throt = 30, Ki_throt, Kd_throt; 
 
     double steering_value, throttle_value;
     int16_t SPEED_INCREMENT = 5;
